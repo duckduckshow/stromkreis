@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stromkreis-Lernspiel</title>
+
+<style>
+*{box-sizing:border-box;font-family:system-ui}
+body{margin:0;background:#f2f2f2;display:flex;justify-content:center}
+.app{
+  background:#fff;
+  max-width:1000px;
+  width:100%;
+  margin:15px;
+  padding:15px;
+  border-radius:12px;
+  box-shadow:0 2px 10px rgba(0,0,0,.1);
+}
+
+h1{text-align:center;margin-bottom:10px}
+
+.top{
+  display:flex;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  font-weight:700;
+}
+
+.section{
+  margin-top:15px;
+  padding:12px;
+  border:1px solid #ddd;
+  border-radius:10px;
+  background:#fafafa;
+}
+
+.button{
+  padding:8px 12px;
+  margin:5px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:700;
+}
+
+.voltage{background:#ffb347;}
+.resistor{background:#87cefa;}
+.button:hover{opacity:.85}
+
+.circuit{
+  margin-top:10px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.box{
+  padding:10px 14px;
+  border-radius:8px;
+  border:2px solid #333;
+  font-weight:700;
+}
+
+.battery{background:#ffd27f;}
+.resBox{background:#cce5ff;}
+
+.meter{
+  margin-top:20px;
+  text-align:center;
+}
+
+.gauge{
+  width:200px;
+  height:200px;
+  border-radius:50%;
+  border:8px solid #333;
+  position:relative;
+  margin:auto;
+  background:#fff;
+}
+
+.needle{
+  width:4px;
+  height:80px;
+  background:red;
+  position:absolute;
+  bottom:50%;
+  left:50%;
+  transform-origin:bottom;
+  transform:rotate(-90deg);
+  transition:transform .5s ease;
+}
+
+.result{
+  margin-top:10px;
+  font-size:18px;
+  font-weight:800;
+  text-align:center;
+}
+
+.success{color:green;}
+.fail{color:red;}
+.low{color:#007bff;}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<h1>Baue den richtigen Stromkreis ⚡</h1>
+
+<div class="top">
+  <div>Zielstrom: <span id="targetI"></span> A</div>
+  <div>Formel: I = U / R</div>
+</div>
+
+<div class="section">
+  <b>Spannungsquelle wählen:</b><br>
+  <button class="button voltage" onclick="setVoltage(3)">3 V</button>
+  <button class="button voltage" onclick="setVoltage(6)">6 V</button>
+  <button class="button voltage" onclick="setVoltage(9)">9 V</button>
+  <button class="button voltage" onclick="setVoltage(12)">12 V</button>
+</div>
+
+<div class="section">
+  <b>Widerstände hinzufügen (Reihe):</b><br>
+  <button class="button resistor" onclick="addRes(5)">5 Ω</button>
+  <button class="button resistor" onclick="addRes(10)">10 Ω</button>
+  <button class="button resistor" onclick="addRes(20)">20 Ω</button>
+  <button class="button resistor" onclick="addRes(30)">30 Ω</button>
+  <button class="button" onclick="clearRes()">Zurücksetzen</button>
+</div>
+
+<div class="section">
+  <b>Stromkreis:</b>
+  <div class="circuit" id="circuit"></div>
+</div>
+
+<div class="meter">
+  <div class="gauge">
+    <div class="needle" id="needle"></div>
+  </div>
+  <div class="result" id="result"></div>
+</div>
+
+</div>
+
+<script>
+
+let voltage = 0;
+let resistors = [];
+let targetI = 0.3; // Zielstrom
+
+document.getElementById("targetI").innerText = targetI;
+
+function setVoltage(v){
+  voltage = v;
+  update();
+}
+
+function addRes(r){
+  resistors.push(r);
+  update();
+}
+
+function clearRes(){
+  resistors = [];
+  update();
+}
+
+function totalResistance(){
+  return resistors.reduce((a,b)=>a+b,0);
+}
+
+function update(){
+
+  const circuitDiv = document.getElementById("circuit");
+  circuitDiv.innerHTML = "";
+
+  if(voltage>0){
+    circuitDiv.innerHTML += `<div class="box battery">${voltage} V</div>`;
+  }
+
+  resistors.forEach(r=>{
+    circuitDiv.innerHTML += `<div class="box resBox">${r} Ω</div>`;
+  });
+
+  const R = totalResistance();
+  if(voltage>0 && R>0){
+    const I = voltage / R;
+    const needle = document.getElementById("needle");
+    const angle = Math.min(I*200, 180) - 90;
+    needle.style.transform = `rotate(${angle}deg)`;
+
+    const result = document.getElementById("result");
+
+    if(Math.abs(I-targetI)<0.02){
+      result.innerHTML = `Perfekt! Strom = ${I.toFixed(2)} A`;
+      result.className="result success";
+    }
+    else if(I < targetI){
+      result.innerHTML = `Zu wenig Strom: ${I.toFixed(2)} A`;
+      result.className="result low";
+    }
+    else{
+      result.innerHTML = `Zu viel Strom: ${I.toFixed(2)} A`;
+      result.className="result fail";
+    }
+  }
+}
+
+</script>
+</body>
+</html>
