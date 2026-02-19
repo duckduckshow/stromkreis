@@ -275,11 +275,7 @@
    Bauteile
 ========================= */
 const VOLTAGES = [1.5, 3, 4.5, 6, 9, 12];
-
-// Minimal erweitert (Level sind dadurch sicherer “lösbar”, ohne unübersichtlich zu werden)
 const RESISTORS = [1, 2.2, 2.7, 3.3, 4.7, 5.6, 6.8, 8.2, 10, 15, 22, 33, 47, 68, 100];
-
-// Max. 2 Widerstände in Serie (didaktisch schlank)
 const MAX_SLOTS = 2;
 
 /* =========================
@@ -367,7 +363,7 @@ let score = 0;
 let voltage = null;
 let resistors = [];
 
-let heat = 0; // 0..1
+let heat = 0;
 let lastTick = performance.now();
 let overheated = false;
 
@@ -723,9 +719,162 @@ function tick(now){
 }
 
 /* =========================
+   Pass conditions + scoring
+========================= */
+function inTarget(i, lvl){
+  if(i === null) return false;
+  if(overheated) return false;
+  return Math.abs(i - lvl.targetI) <= lvl.tol;
+}
+function missionOK(i, lvl){
+  if(lvl.mode !== "mission" || !lvl.mission) return true;
+  const m = lvl.mission;
+  const b = lampBrightness(i ?? 0);
+  if(m.lampMin != null && b < m.lampMin) return false;
+  if(m.lampMax != null && b > m.lampMax) return false;
+  if(m.heatMax != null && heat > m.heatMax) return false;
+  return true;
+}
+
+/* =========================
+   TRUE possible: Brute-force über alle erlaubten Kombinationen
+========================= */
+const possibleCache = new Map();
+
+function levelKey(lvl){
+  return JSON.stringify({
+    mode: lvl.mode,
+    targetI: lvl.targetI,
+    tol: lvl.tol,
+    maxSafeI: lvl.maxSafeI,
+    mission: lvl.mission || null,
+    diagnose: lvl.diagnose || null,
+    hasMc: !!lvl.mc
+  });
+}
+
+function pointsForGivenSetup(i, lvl, usedResCount){
+  const heatIdeal = 0;
+  const diff = Math.abs(i - lvl.targetI);
+  if(diff > lvl.tol) return 0;
+
+  let pts = 0;
+  pts += 120;
+
+  if(lvl.mode === "mission"){
+    pts += missionOK(i, lvl) ? 80 : 0;
+  }
+  if(lvl.mode === "diagnose" && lvl.mc){
+    pts += 20;
+  }
+
+  pts += Math.round((1 - (diff / lvl.tol)) * 60);
+  pts += Math.max(0, 28 - usedResCount * 6);
+  pts += Math.round((1 - heatIdeal) * 18); // 18
+  pts += Math.round(lampBrightness(i) * 30);
+
+  return Math.max(0, pts);
+}
+
+function enumerateResistorCombosForLevel(lvl){
+  const combos = [];
+
+  if(lvl.mode === "diagnose" && lvl.diagnose?.lockResistors){
+    combos.push((lvl.diagnose.presetResistors || []).slice(0, MAX_SLOTS));
+    return combos;
+  }
+
+  for(const r1 of RESISTORS){
+    combos.push([r1]);
+  }
+  if(MAX_SLOTS >= 2){
+    for(const r1 of RESISTORS){
+      for(const r2 of RESISTORS){
+        combos.push([r1, r2]);
+      }
+    }
+  }
+  return combos;
+}
+
+function enumerateVoltagesForLevel(lvl){
+  if(lvl.mode === "diagnose" && lvl.diagnose?.lockVoltage){
+    return [lvl.diagnose.presetVoltage];
+  }
+  return VOLTAGES.slice();
+}
+
+function pointsPossible(lvl){
+  const key = levelKey(lvl);
+  if(possibleCache.has(key)) return possibleCache.get(key);
+
+  let best = 0;
+
+  const volts = enumerateVoltagesForLevel(lvl);
+  const resCombos = enumerateResistorCombosForLevel(lvl);
+
+  for(const U of volts){
+    if(!Number.isFinite(U) || U <= 0) continue;
+
+    for(const rs of resCombos){
+      const R = rs.reduce((a,b)=>a+b,0);
+      if(!(R > 0)) continue;
+
+      const I = U / R;
+
+      if(Math.abs(I - lvl.targetI) > lvl.tol) continue;
+      if(!missionOK(I, lvl)) continue;
+
+      const pts = pointsForGivenSetup(I, lvl, rs.length);
+      if(pts > best) best = pts;
+    }
+  }
+
+  possibleCache.set(key, best);
+  return best;
+}
+
+/* pointsForAttempt benutzt jetzt pointsPossible(lvl) */
+function pointsForAttempt(i, lvl){
+  const possible = pointsPossible(lvl);
+
+  if(i === null) return { pts:0, possible };
+  if(overheated) return { pts:0, possible };
+
+  let pts = 0;
+  const diff = Math.abs(i - lvl.targetI);
+
+  if(diff <= lvl.tol){
+    pts = 120;
+
+    if(lvl.mode === "mission"){
+      pts += missionOK(i, lvl) ? 80 : 0;
+    }
+    if(lvl.mode === "diagnose" && lvl.mc){
+      pts += 20;
+    }
+
+    pts += Math.round((1 - (diff / lvl.tol)) * 60);
+    pts += Math.max(0, 28 - resistors.length*6);
+    pts += Math.round((1 - heat) * 18);
+    pts += Math.round(lampBrightness(i) * 30);
+  }else{
+    const maxDiff = lvl.tol * 4;
+    if(diff < maxDiff){
+      pts = Math.round((1 - diff/maxDiff) * 40);
+    }
+  }
+
+  pts = Math.max(0, pts);
+  return { pts, possible };
+}
+
+/* =========================
    Level start / reset
 ========================= */
 function startLevel(i){
+  possibleCache.clear();
+
   levelIndex = i;
   const lvl = LEVELS[levelIndex];
 
@@ -755,102 +904,6 @@ function updateAll(){
   updateMeters();
   setHeatUI();
   $("nextBtn").disabled = true;
-}
-
-/* =========================
-   Pass conditions + scoring
-   - “possible” ist jetzt wirklich das maximal Erreichbare pro Level.
-========================= */
-function inTarget(i, lvl){
-  if(i === null) return false;
-  if(overheated) return false;
-  return Math.abs(i - lvl.targetI) <= lvl.tol;
-}
-function missionOK(i, lvl){
-  if(lvl.mode !== "mission" || !lvl.mission) return true;
-  const m = lvl.mission;
-  const b = lampBrightness(i ?? 0);
-  if(m.lampMin != null && b < m.lampMin) return false;
-  if(m.lampMax != null && b > m.lampMax) return false;
-  if(m.heatMax != null && heat > m.heatMax) return false;
-  return true;
-}
-
-/* Minimal mögliche Widerstandsanzahl (für max. Einfachheitsbonus) */
-function minResCountForLevel(lvl){
-  if(lvl.mode === "diagnose" && lvl.diagnose?.lockResistors){
-    const n = (lvl.diagnose.presetResistors ?? []).length;
-    return Math.max(1, Math.min(MAX_SLOTS, n || 1));
-  }
-  return 1; // sonst: 1 Widerstand ist immer möglich
-}
-
-/* Maximal mögliche Helligkeit IM KORREKTEN BEREICH */
-function brightnessMaxInCorrectRange(lvl){
-  // max I im “richtig”-Intervall:
-  let iMax = lvl.targetI + lvl.tol;
-
-  // clamp auf physikalisch/anzeigen:
-  let bMax = lampBrightness(iMax);
-
-  // Mission kann zusätzlich begrenzen:
-  if(lvl.mode === "mission" && lvl.mission?.lampMax != null){
-    bMax = Math.min(bMax, lvl.mission.lampMax);
-  }
-  // lampMin begrenzt nicht nach oben.
-  return clamp01(bMax);
-}
-
-function pointsPossible(lvl){
-  const base = 120;
-  const accuracyMax = 60; // bei diff=0
-  const coolMax = 18;     // bei heat=0 (und das ist immer erreichbar)
-  const minRes = minResCountForLevel(lvl);
-  const simplicityMax = Math.max(0, 28 - minRes * 6);
-
-  const bMax = brightnessMaxInCorrectRange(lvl);
-  const brightnessMaxPts = Math.round(bMax * 30);
-
-  const missionMax = (lvl.mode === "mission") ? 80 : 0;
-  const diagnoseMax = (lvl.mode === "diagnose" && lvl.mc) ? 20 : 0;
-
-  return base + accuracyMax + simplicityMax + coolMax + brightnessMaxPts + missionMax + diagnoseMax;
-}
-
-function pointsForAttempt(i, lvl){
-  const possible = pointsPossible(lvl);
-
-  if(i === null) return { pts:0, possible };
-  if(overheated) return { pts:0, possible };
-
-  let pts = 0;
-  const diff = Math.abs(i - lvl.targetI);
-
-  if(diff <= lvl.tol){
-    pts = 120;
-
-    if(lvl.mode === "mission"){
-      pts += missionOK(i, lvl) ? 80 : 0;
-    }
-    if(lvl.mode === "diagnose" && lvl.mc){
-      pts += 20;
-    }
-
-    pts += Math.round((1 - (diff / lvl.tol)) * 60);
-    pts += Math.max(0, 28 - resistors.length*6);
-    pts += Math.round((1 - heat) * 18);
-
-    const b = lampBrightness(i);
-    pts += Math.round(b * 30);
-  }else{
-    const maxDiff = lvl.tol * 4;
-    if(diff < maxDiff){
-      pts = Math.round((1 - diff/maxDiff) * 40);
-    }
-  }
-
-  pts = Math.max(0, pts);
-  return { pts, possible };
 }
 
 /* =========================
@@ -909,9 +962,12 @@ $("nextBtn").onclick = ()=>{
 /* =========================
    Init
 ========================= */
-renderPickers();
-startLevel(0);
-requestAnimationFrame(tick);
+function init(){
+  renderPickers();
+  startLevel(0);
+  requestAnimationFrame(tick);
+}
+init();
 </script>
 </body>
 </html>
