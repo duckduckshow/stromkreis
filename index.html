@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Stromkreis-Lernspiel – kompakt, Mission & Diagnose (Serien-Steckplatz dynamisch)</title>
+<title>Stromkreis-Lernspiel – kompakt, Mission & Diagnose</title>
 <style>
   *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,sans-serif}
   body{margin:0;background:#f3f3f3;display:flex;justify-content:center}
@@ -13,9 +13,7 @@
   }
   h1{margin:4px 0 8px;text-align:center;font-size:17px}
 
-  .top{
-    display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap
-  }
+  .top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
   .pill{
     display:inline-flex;align-items:center;gap:8px;
     padding:5px 9px;border-radius:999px;border:1px solid #ddd;background:#fafafa;
@@ -23,19 +21,10 @@
   }
 
   /* Left side narrower */
-  .grid{
-    margin-top:10px;
-    display:grid;
-    grid-template-columns: 280px 1fr;
-    gap:10px;
-  }
-  @media (max-width:920px){
-    .grid{grid-template-columns:1fr}
-  }
+  .grid{margin-top:10px;display:grid;grid-template-columns: 280px 1fr;gap:10px}
+  @media (max-width:920px){.grid{grid-template-columns:1fr}}
 
-  .card{
-    border:1px solid #e5e5e5;border-radius:12px;background:#fcfcfc;padding:10px
-  }
+  .card{border:1px solid #e5e5e5;border-radius:12px;background:#fcfcfc;padding:10px}
   .title{font-weight:1100;margin-bottom:8px;font-size:13px}
   .small{font-size:12px;color:#555;font-weight:800;line-height:1.25}
 
@@ -55,7 +44,7 @@
   .section{margin-top:10px}
   .label{font-weight:1100;font-size:12px;color:#333;margin-bottom:6px}
 
-  /* ===== Compact board ===== */
+  /* ===== Board ===== */
   .board{
     position:relative;
     border:1px solid #ddd;border-radius:12px;background:#fff;
@@ -68,19 +57,13 @@
     opacity:.65;pointer-events:none;
   }
 
-  /* Circuit row: real series order */
+  /* Circuit row: series order */
   .circuitRow{
-    position:relative;
-    z-index:1;
-    display:flex;
-    align-items:center;
-    gap:8px;
-    flex-wrap:nowrap;
+    position:relative;z-index:1;
+    display:flex;align-items:center;gap:8px;flex-wrap:nowrap;
     padding:18px 10px 10px;
   }
-  @media (max-width:920px){
-    .circuitRow{flex-wrap:wrap}
-  }
+  @media (max-width:920px){.circuitRow{flex-wrap:wrap}}
 
   .wireFlex{
     flex:1 1 36px;
@@ -103,14 +86,8 @@
   .battery .sub{font-size:11px;font-weight:900;color:#333}
 
   .placeholder{
-    border:2px dashed #bbb;
-    border-radius:12px;
-    padding:10px 12px;
-    background:#fafafa;
-    font-weight:1100;
-    color:#666;
-    font-size:12px;
-    white-space:nowrap;
+    border:2px dashed #bbb;border-radius:12px;padding:10px 12px;background:#fafafa;
+    font-weight:1100;color:#666;font-size:12px;white-space:nowrap
   }
 
   /* Smaller resistor */
@@ -152,15 +129,8 @@
   .lampLabel{font-size:11px;font-weight:900;color:#333}
 
   /* Meter compact */
-  .meters{
-    margin-top:10px;
-    display:grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap:10px;
-  }
-  @media (max-width:920px){
-    .meters{grid-template-columns: 1fr}
-  }
+  .meters{margin-top:10px;display:grid;grid-template-columns: 1fr 1fr 1fr;gap:10px}
+  @media (max-width:920px){.meters{grid-template-columns: 1fr}}
   .mCard{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:10px}
   .mTitle{font-weight:1100;font-size:12px;margin-bottom:6px}
   .big{font-size:20px;font-weight:1200}
@@ -179,21 +149,17 @@
   }
   .heatBox.show{display:block}
 
-  /* Mission / Diagnose compact */
-  .taskBox{
-    margin-top:8px;background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:9px
-  }
+  /* Task + MC */
+  .taskBox{margin-top:8px;background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:9px}
   .taskTitle{font-weight:1200;font-size:13px;margin-bottom:4px}
+  .taskTitle .mission{font-weight:1300}
   .badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
   .badge{
     padding:4px 9px;border-radius:999px;border:1px solid #ddd;background:#fafafa;
     font-weight:1100;font-size:11px;
   }
 
-  /* Diagnose MC */
-  .mc{
-    margin-top:10px;background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:9px
-  }
+  .mc{margin-top:10px;background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:9px}
   .mcTitle{font-weight:1200;font-size:13px;margin-bottom:6px}
   .opt{
     border:1px solid #ddd;border-radius:12px;padding:9px;background:#fafafa;
@@ -205,6 +171,16 @@
   .opt.disabled{pointer-events:none;opacity:.95}
 
   .controls{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:10px}
+
+  /* Post-check info (compact) */
+  .resultBox{
+    margin-top:8px;
+    background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:9px;
+    display:none;
+  }
+  .resultBox.show{display:block}
+  .resultLine{font-weight:1100;font-size:12px;color:#222;line-height:1.25}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
 </style>
 </head>
 
@@ -293,6 +269,11 @@
         <button class="btn" id="checkBtn">Prüfen</button>
         <button class="btn" id="nextBtn" disabled>Weiter</button>
       </div>
+
+      <div class="resultBox" id="resultBox">
+        <div class="resultLine" id="calcLine"></div>
+        <div class="resultLine" id="pointsLine" style="margin-top:6px"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -302,20 +283,22 @@
    Bauteile
 ========================= */
 const VOLTAGES = [1.5, 3, 4.5, 6, 9, 12];
-const RESISTORS = [1, 2.2, 3.3, 4.7, 5.6, 6.8, 10, 15, 22, 33, 47, 68, 100];
 
-/* Maximal 2 Widerstände in Serie (didaktisch schlank) */
+// Minimal erweitert (damit Level besser lösbar bleibt – ohne “optional/kompliziert”):
+const RESISTORS = [1, 2.2, 2.7, 3.3, 4.7, 5.6, 6.8, 8.2, 10, 15, 22, 33, 47, 68, 100];
+
+// Maximal 2 Widerstände in Serie (didaktisch schlank)
 const MAX_SLOTS = 2;
 
 /* =========================
-   Levels
+   Levels (Level 2 explizit “lösbar” hinweisen)
 ========================= */
 const LEVELS = [
   { mode:"build",  label:"Warm-up", targetI:0.30, tol:0.02, maxSafeI:0.55,
     hint:"Treffe den Zielstrom." },
 
   { mode:"build",  label:"Fein", targetI:0.12, tol:0.015, maxSafeI:0.35,
-    hint:"Kleiner Strom → meist größerer Widerstand." },
+    hint:"Tipp: Mit 3V brauchst du ca. 25Ω (z.B. 22Ω + 3,3Ω)." },
 
   { mode:"mission", label:"Mission: Hell & sicher", targetI:0.45, tol:0.03, maxSafeI:0.60,
     mission:{ lampMin:0.65, heatMax:0.60 },
@@ -417,6 +400,12 @@ function lampBrightness(i){
   if(!Number.isFinite(i)) return 0;
   return Math.max(0, Math.min(1, i / 0.6));
 }
+function hideResultBox(){ $("resultBox").classList.remove("show"); }
+function showResultBox(calcText, pointsText){
+  $("calcLine").innerHTML = calcText;
+  $("pointsLine").innerHTML = pointsText;
+  $("resultBox").classList.add("show");
+}
 
 /* =========================
    Visual components
@@ -476,7 +465,6 @@ function setLampGlow(i){
   const pct = Math.round(b*100);
   $("lampFill").style.width = `${pct}%`;
   $("lampPct").textContent = `${pct}%`;
-
   const inline = $("lampPctInline");
   if(inline) inline.textContent = `${pct}%`;
 
@@ -563,7 +551,7 @@ function applyLocksToControls(){
   }else{
     $("lockInfoV").textContent = (lockVoltage && lvl.mode==="diagnose") ? "🔒 Batterie fix." : "";
     if(slotsFull && !(lockResistors || !allowResistors)) {
-      $("lockInfoR").textContent = `Maximal ${MAX_SLOTS} Widerstände.`;
+      $("lockInfoR").textContent = `Max. ${MAX_SLOTS} Widerstände.`;
     } else {
       $("lockInfoR").textContent = (lockResistors && lvl.mode==="diagnose") ? "🔒 Widerstände fix." : "";
     }
@@ -583,7 +571,7 @@ function renderPickers(){
     const b = document.createElement("button");
     b.className = "btn ghost";
     b.textContent = `${String(v).replace(".", ",")}V`;
-    b.onclick = ()=>{ voltage = v; updateAll(); };
+    b.onclick = ()=>{ voltage = v; hideResultBox(); updateAll(); };
     vb.appendChild(b);
   });
 
@@ -594,29 +582,26 @@ function renderPickers(){
     b.onclick = ()=>{
       if(resistors.length >= MAX_SLOTS) return;
       resistors.push(r);
+      hideResultBox();
       updateAll();
     };
     rb.appendChild(b);
   });
 
-  $("undoBtn").onclick = ()=>{ resistors.pop(); updateAll(); };
+  $("undoBtn").onclick = ()=>{ resistors.pop(); hideResultBox(); updateAll(); };
   $("resetBtn").onclick = ()=>{ startLevel(levelIndex); };
 }
 
-/* IMPORTANT: second series “slot” only appears when used.
-   Otherwise the wire remains continuous (one long wire). */
+/* Second resistor only shown when used; otherwise wire stays continuous */
 function renderBoard(){
   const row = $("circuitRow");
 
   const bat = voltage ? renderBattery(voltage) : `<div class="placeholder">Batterie?</div>`;
-
-  const r1 = resistors[0] != null ? renderResistor(resistors[0]) : `<div class="placeholder">R1?</div>`;
+  const r1  = resistors[0] != null ? renderResistor(resistors[0]) : `<div class="placeholder">R1?</div>`;
 
   const hasR2 = resistors[1] != null;
   const r2 = hasR2 ? renderResistor(resistors[1]) : "";
 
-  // Series order:
-  // Batterie — wire — R1 — (if R2: wire — R2) — wire — Lampe
   row.innerHTML = `
     ${bat}
     <div class="wireFlex"></div>
@@ -632,9 +617,8 @@ function renderHeader(){
   $("levelLabel").textContent = `${levelIndex+1}/${LEVELS.length} – ${lvl.label}`;
   $("modeLabel").textContent =
     lvl.mode === "build" ? "Bauen" :
-    lvl.mode === "mission" ? "Mission" :
+    lvl.mode === "mission" ? "MISSION" :
     "Diagnose";
-
   $("targetLabel").textContent = `${fmt(lvl.targetI,2)} A`;
   $("tolLabel").textContent = fmt(lvl.tol,2);
   $("scoreLabel").textContent = score;
@@ -643,9 +627,9 @@ function renderHeader(){
 function renderTask(){
   const lvl = LEVELS[levelIndex];
 
-  $("taskTitle").textContent =
+  $("taskTitle").innerHTML =
     lvl.mode === "build" ? "Aufgabe: Zielstrom" :
-    lvl.mode === "mission" ? "Mission" :
+    lvl.mode === "mission" ? "<span class='mission'><b>MISSION</b></span>: Zusatzbedingungen" :
     "Fehlerdiagnose";
 
   const badges = [];
@@ -653,9 +637,9 @@ function renderTask(){
 
   if(lvl.mode === "mission" && lvl.mission){
     const m = lvl.mission;
-    if(m.lampMin != null) badges.push(`<span class="badge">💡 ≥${Math.round(m.lampMin*100)}%</span>`);
-    if(m.lampMax != null) badges.push(`<span class="badge">💡 ≤${Math.round(m.lampMax*100)}%</span>`);
-    if(m.heatMax != null) badges.push(`<span class="badge">🌡️ ≤${Math.round(m.heatMax*100)}%</span>`);
+    if(m.lampMin != null) badges.push(`<span class="badge"><b>💡 ≥${Math.round(m.lampMin*100)}%</b></span>`);
+    if(m.lampMax != null) badges.push(`<span class="badge"><b>💡 ≤${Math.round(m.lampMax*100)}%</b></span>`);
+    if(m.heatMax != null) badges.push(`<span class="badge"><b>🌡️ ≤${Math.round(m.heatMax*100)}%</b></span>`);
   }
 
   if(lvl.mode === "diagnose" && lvl.diagnose){
@@ -696,12 +680,13 @@ function renderMC(){
         mcAnswered = true;
       }else{
         d.classList.add("wrong");
-        $("mcHint").textContent = "Nicht ganz. Schau: Ist der Strom zu groß oder zu klein?";
+        $("mcHint").textContent = "Nicht ganz. Ist der Strom zu groß oder zu klein?";
         const correctIdx = lvl.mc.options.findIndex(x=>x.ok);
         if(correctIdx >= 0) opts.children[correctIdx].classList.add("correct");
-        mcAnswered = true; // bewusst: danach dürfen sie trotzdem reparieren
+        mcAnswered = true; // danach dürfen sie trotzdem reparieren
       }
 
+      hideResultBox();
       updateAll();
     };
     opts.appendChild(d);
@@ -766,6 +751,7 @@ function startLevel(i){
     resistors = [];
   }
 
+  hideResultBox();
   updateAll();
 }
 
@@ -782,6 +768,8 @@ function updateAll(){
 
 /* =========================
    Pass conditions + scoring
+   - Neu: Helligkeits-Punkte, wenn Lösung richtig ist.
+   - Neu: Anzeige “erreichte Punkte / mögliche Punkte”.
 ========================= */
 function inTarget(i, lvl){
   if(i === null) return false;
@@ -792,16 +780,28 @@ function missionOK(i, lvl){
   if(lvl.mode !== "mission" || !lvl.mission) return true;
   const m = lvl.mission;
   const b = lampBrightness(i ?? 0);
-
   if(m.lampMin != null && b < m.lampMin) return false;
   if(m.lampMax != null && b > m.lampMax) return false;
   if(m.heatMax != null && heat > m.heatMax) return false;
-
   return true;
 }
+
+function pointsPossible(lvl){
+  // “mögliche Punkte” als klarer Maximalwert pro Leveltyp (kompakt & nachvollziehbar)
+  // Build:   120 + 60 (Genauigkeit) + 22 (Simplicity bei 1R) + 18 (kühl) + 30 (Helligkeit)
+  // Mission: +80 (Mission erfüllt)
+  // Diagnose:+20 (Diagnose-Level Bonus)
+  let base = 120 + 60 + 22 + 18 + 30;
+  if(lvl.mode === "mission") base += 80;
+  if(lvl.mode === "diagnose") base += 20;
+  return base;
+}
+
 function pointsForAttempt(i, lvl){
-  if(i === null) return 0;
-  if(overheated) return 0;
+  const possible = pointsPossible(lvl);
+
+  if(i === null) return { pts:0, possible };
+  if(overheated) return { pts:0, possible };
 
   let pts = 0;
   const diff = Math.abs(i - lvl.targetI);
@@ -809,23 +809,38 @@ function pointsForAttempt(i, lvl){
   if(diff <= lvl.tol){
     pts = 120;
 
+    // mission bonus (nur wenn Mission erfüllt)
     if(lvl.mode === "mission"){
-      pts += missionOK(i, lvl) ? 80 : 10;
+      pts += missionOK(i, lvl) ? 80 : 0;
     }
+
+    // diagnose bonus (klein & konstant)
     if(lvl.mode === "diagnose" && lvl.mc){
       pts += 20;
     }
 
+    // Genauigkeit (0..60)
     pts += Math.round((1 - (diff / lvl.tol)) * 60);
-    pts += Math.max(0, 28 - resistors.length*6);
+
+    // Einfachheit (bevorzugt 1 Widerstand)
+    pts += Math.max(0, 28 - resistors.length*6); // bei 1R: 22
+
+    // Kühl bleiben (0..18)
     pts += Math.round((1 - heat) * 18);
+
+    // Neu: Helligkeitspunkte, wenn Lösung richtig (0..30)
+    const b = lampBrightness(i);
+    pts += Math.round(b * 30);
   }else{
+    // Nähe-Bonus (0..40) wenn nicht zu weit weg
     const maxDiff = lvl.tol * 4;
     if(diff < maxDiff){
       pts = Math.round((1 - diff/maxDiff) * 40);
     }
   }
-  return Math.max(0, pts);
+
+  pts = Math.max(0, pts);
+  return { pts, possible };
 }
 
 /* =========================
@@ -841,18 +856,36 @@ $("checkBtn").onclick = ()=>{
   }
 
   const okTarget = inTarget(i, lvl);
-  const okMission = missionOK(i, lvl);
-  const ok = okTarget && okMission;
+  const ok = okTarget && missionOK(i, lvl);
 
-  const pts = pointsForAttempt(i, lvl);
+  const { pts, possible } = pointsForAttempt(i, lvl);
   score += pts;
   $("scoreLabel").textContent = score;
 
-  if(lvl.mode === "mission" && okTarget && !okMission){
-    alert("Zielstrom getroffen ✅ – aber Mission noch nicht erfüllt (Lampe/Wärme).");
-  }
+  // Nach Lösung: konkrete Rechnung + Punkteanzeige
+  if(ok){
+    const U = voltage;
+    const R = sumR();
+    const I = i;
 
-  $("nextBtn").disabled = !ok;
+    const calcText =
+      `<span class="mono"><b>I</b> = <b>U</b> / <b>R</b> = ` +
+      `${fmt(U,1)}V / ${fmt(R,1)}Ω = ${fmt(I,2)}A</span>`;
+
+    const pointsText =
+      `<b>Punkte:</b> ${pts} / ${possible}`;
+
+    showResultBox(calcText, pointsText);
+    $("nextBtn").disabled = false;
+  }else{
+    // kompakt: bei Nicht-Lösung ResultBox ausblenden
+    hideResultBox();
+    $("nextBtn").disabled = true;
+
+    if(lvl.mode === "mission" && okTarget && !missionOK(i, lvl)){
+      alert("Zielstrom getroffen ✅ – aber Mission noch nicht erfüllt (Lampe/Wärme).");
+    }
+  }
 };
 
 $("nextBtn").onclick = ()=>{
