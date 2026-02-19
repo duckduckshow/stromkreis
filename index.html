@@ -20,7 +20,6 @@
     font-weight:900;font-size:12px;color:#222
   }
 
-  /* Left side narrower */
   .grid{margin-top:10px;display:grid;grid-template-columns: 280px 1fr;gap:10px}
   @media (max-width:920px){.grid{grid-template-columns:1fr}}
 
@@ -57,7 +56,6 @@
     opacity:.65;pointer-events:none;
   }
 
-  /* Circuit row: series order */
   .circuitRow{
     position:relative;z-index:1;
     display:flex;align-items:center;gap:8px;flex-wrap:nowrap;
@@ -73,7 +71,6 @@
     min-width:18px;
   }
 
-  /* Smaller battery */
   .battery{
     width:118px;height:50px;border-radius:12px;
     background:linear-gradient(180deg,#ffd27f,#ffbe55);
@@ -90,7 +87,6 @@
     font-weight:1100;color:#666;font-size:12px;white-space:nowrap
   }
 
-  /* Smaller resistor */
   .resistor{
     width:128px;height:42px;border-radius:12px;
     border:2px solid #333;background:#fff;
@@ -110,7 +106,6 @@
     border:1px solid rgba(0,0,0,.15);border-radius:999px;padding:2px 7px;
   }
 
-  /* Lamp */
   .lampWrap{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:90px}
   .lamp{
     width:74px;height:74px;border-radius:999px;
@@ -128,7 +123,6 @@
   .lampPct{font-size:12px;font-weight:1100}
   .lampLabel{font-size:11px;font-weight:900;color:#333}
 
-  /* Meter compact */
   .meters{margin-top:10px;display:grid;grid-template-columns: 1fr 1fr 1fr;gap:10px}
   @media (max-width:920px){.meters{grid-template-columns: 1fr}}
   .mCard{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:10px}
@@ -149,7 +143,6 @@
   }
   .heatBox.show{display:block}
 
-  /* Task + MC */
   .taskBox{margin-top:8px;background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:9px}
   .taskTitle{font-weight:1200;font-size:13px;margin-bottom:4px}
   .taskTitle .mission{font-weight:1300}
@@ -172,7 +165,6 @@
 
   .controls{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:10px}
 
-  /* Post-check info (compact) */
   .resultBox{
     margin-top:8px;
     background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:9px;
@@ -284,20 +276,20 @@
 ========================= */
 const VOLTAGES = [1.5, 3, 4.5, 6, 9, 12];
 
-// Minimal erweitert (damit Level besser lösbar bleibt – ohne “optional/kompliziert”):
+// Minimal erweitert (Level sind dadurch sicherer “lösbar”, ohne unübersichtlich zu werden)
 const RESISTORS = [1, 2.2, 2.7, 3.3, 4.7, 5.6, 6.8, 8.2, 10, 15, 22, 33, 47, 68, 100];
 
-// Maximal 2 Widerstände in Serie (didaktisch schlank)
+// Max. 2 Widerstände in Serie (didaktisch schlank)
 const MAX_SLOTS = 2;
 
 /* =========================
-   Levels (Level 2 explizit “lösbar” hinweisen)
+   Levels
 ========================= */
 const LEVELS = [
-  { mode:"build",  label:"Warm-up", targetI:0.30, tol:0.02, maxSafeI:0.55,
+  { mode:"build",  label:"Warm-up", targetI:0.30, tol:0.02,  maxSafeI:0.55,
     hint:"Treffe den Zielstrom." },
 
-  { mode:"build",  label:"Fein", targetI:0.12, tol:0.015, maxSafeI:0.35,
+  { mode:"build",  label:"Fein",    targetI:0.12, tol:0.015, maxSafeI:0.35,
     hint:"Tipp: Mit 3V brauchst du ca. 25Ω (z.B. 22Ω + 3,3Ω)." },
 
   { mode:"mission", label:"Mission: Hell & sicher", targetI:0.45, tol:0.03, maxSafeI:0.60,
@@ -379,7 +371,7 @@ let heat = 0; // 0..1
 let lastTick = performance.now();
 let overheated = false;
 
-let mcAnswered = false; // must answer MC before fixing in diagnose levels
+let mcAnswered = false;
 
 /* =========================
    Helpers
@@ -390,6 +382,7 @@ function fmt(x, digits=2){
   const r = Number.isFinite(x) ? (Math.round(x * (10**digits)) / (10**digits)) : x;
   return String(r).replace(".", ",");
 }
+function clamp01(x){ return Math.max(0, Math.min(1, x)); }
 function sumR(){ return resistors.reduce((a,b)=>a+b,0); }
 function currentI(){
   const R = sumR();
@@ -398,7 +391,7 @@ function currentI(){
 }
 function lampBrightness(i){
   if(!Number.isFinite(i)) return 0;
-  return Math.max(0, Math.min(1, i / 0.6));
+  return clamp01(i / 0.6);
 }
 function hideResultBox(){ $("resultBox").classList.remove("show"); }
 function showResultBox(calcText, pointsText){
@@ -518,7 +511,6 @@ function currentLocks(){
   const lockResistors = !!d.lockResistors;
   const allowBattery = (lvl.mode !== "diagnose") ? true : !!d.allowBattery;
   const allowResistors = (lvl.mode !== "diagnose") ? true : !!d.allowResistors;
-
   const gate = (lvl.mode === "diagnose") ? mcAnswered : true;
 
   return {
@@ -592,7 +584,6 @@ function renderPickers(){
   $("resetBtn").onclick = ()=>{ startLevel(levelIndex); };
 }
 
-/* Second resistor only shown when used; otherwise wire stays continuous */
 function renderBoard(){
   const row = $("circuitRow");
 
@@ -683,7 +674,7 @@ function renderMC(){
         $("mcHint").textContent = "Nicht ganz. Ist der Strom zu groß oder zu klein?";
         const correctIdx = lvl.mc.options.findIndex(x=>x.ok);
         if(correctIdx >= 0) opts.children[correctIdx].classList.add("correct");
-        mcAnswered = true; // danach dürfen sie trotzdem reparieren
+        mcAnswered = true;
       }
 
       hideResultBox();
@@ -768,8 +759,7 @@ function updateAll(){
 
 /* =========================
    Pass conditions + scoring
-   - Neu: Helligkeits-Punkte, wenn Lösung richtig ist.
-   - Neu: Anzeige “erreichte Punkte / mögliche Punkte”.
+   - “possible” ist jetzt wirklich das maximal Erreichbare pro Level.
 ========================= */
 function inTarget(i, lvl){
   if(i === null) return false;
@@ -786,15 +776,45 @@ function missionOK(i, lvl){
   return true;
 }
 
+/* Minimal mögliche Widerstandsanzahl (für max. Einfachheitsbonus) */
+function minResCountForLevel(lvl){
+  if(lvl.mode === "diagnose" && lvl.diagnose?.lockResistors){
+    const n = (lvl.diagnose.presetResistors ?? []).length;
+    return Math.max(1, Math.min(MAX_SLOTS, n || 1));
+  }
+  return 1; // sonst: 1 Widerstand ist immer möglich
+}
+
+/* Maximal mögliche Helligkeit IM KORREKTEN BEREICH */
+function brightnessMaxInCorrectRange(lvl){
+  // max I im “richtig”-Intervall:
+  let iMax = lvl.targetI + lvl.tol;
+
+  // clamp auf physikalisch/anzeigen:
+  let bMax = lampBrightness(iMax);
+
+  // Mission kann zusätzlich begrenzen:
+  if(lvl.mode === "mission" && lvl.mission?.lampMax != null){
+    bMax = Math.min(bMax, lvl.mission.lampMax);
+  }
+  // lampMin begrenzt nicht nach oben.
+  return clamp01(bMax);
+}
+
 function pointsPossible(lvl){
-  // “mögliche Punkte” als klarer Maximalwert pro Leveltyp (kompakt & nachvollziehbar)
-  // Build:   120 + 60 (Genauigkeit) + 22 (Simplicity bei 1R) + 18 (kühl) + 30 (Helligkeit)
-  // Mission: +80 (Mission erfüllt)
-  // Diagnose:+20 (Diagnose-Level Bonus)
-  let base = 120 + 60 + 22 + 18 + 30;
-  if(lvl.mode === "mission") base += 80;
-  if(lvl.mode === "diagnose") base += 20;
-  return base;
+  const base = 120;
+  const accuracyMax = 60; // bei diff=0
+  const coolMax = 18;     // bei heat=0 (und das ist immer erreichbar)
+  const minRes = minResCountForLevel(lvl);
+  const simplicityMax = Math.max(0, 28 - minRes * 6);
+
+  const bMax = brightnessMaxInCorrectRange(lvl);
+  const brightnessMaxPts = Math.round(bMax * 30);
+
+  const missionMax = (lvl.mode === "mission") ? 80 : 0;
+  const diagnoseMax = (lvl.mode === "diagnose" && lvl.mc) ? 20 : 0;
+
+  return base + accuracyMax + simplicityMax + coolMax + brightnessMaxPts + missionMax + diagnoseMax;
 }
 
 function pointsForAttempt(i, lvl){
@@ -809,30 +829,20 @@ function pointsForAttempt(i, lvl){
   if(diff <= lvl.tol){
     pts = 120;
 
-    // mission bonus (nur wenn Mission erfüllt)
     if(lvl.mode === "mission"){
       pts += missionOK(i, lvl) ? 80 : 0;
     }
-
-    // diagnose bonus (klein & konstant)
     if(lvl.mode === "diagnose" && lvl.mc){
       pts += 20;
     }
 
-    // Genauigkeit (0..60)
     pts += Math.round((1 - (diff / lvl.tol)) * 60);
-
-    // Einfachheit (bevorzugt 1 Widerstand)
-    pts += Math.max(0, 28 - resistors.length*6); // bei 1R: 22
-
-    // Kühl bleiben (0..18)
+    pts += Math.max(0, 28 - resistors.length*6);
     pts += Math.round((1 - heat) * 18);
 
-    // Neu: Helligkeitspunkte, wenn Lösung richtig (0..30)
     const b = lampBrightness(i);
     pts += Math.round(b * 30);
   }else{
-    // Nähe-Bonus (0..40) wenn nicht zu weit weg
     const maxDiff = lvl.tol * 4;
     if(diff < maxDiff){
       pts = Math.round((1 - diff/maxDiff) * 40);
@@ -862,7 +872,6 @@ $("checkBtn").onclick = ()=>{
   score += pts;
   $("scoreLabel").textContent = score;
 
-  // Nach Lösung: konkrete Rechnung + Punkteanzeige
   if(ok){
     const U = voltage;
     const R = sumR();
@@ -878,7 +887,6 @@ $("checkBtn").onclick = ()=>{
     showResultBox(calcText, pointsText);
     $("nextBtn").disabled = false;
   }else{
-    // kompakt: bei Nicht-Lösung ResultBox ausblenden
     hideResultBox();
     $("nextBtn").disabled = true;
 
